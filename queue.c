@@ -1,5 +1,6 @@
 #include <pthread.h> /*for threads*/
 
+// move to header // 
 typedef struct Node
 {
     pthread_t *next; //the next thread//
@@ -15,6 +16,8 @@ typedef struct Queue
     pthread_mutex_t mutex;
 
 } q, *ptr_q;
+
+/////////////////////////////////
 
 static ptr_q init_queue()
 {

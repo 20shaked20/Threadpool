@@ -3,7 +3,7 @@
  * Lior Nagar
  * Shaked Levi
 */
-
+#include <stdio.h>
 /**
  * This method is responsible to handle the flags:
  * '-d' -> decryption
