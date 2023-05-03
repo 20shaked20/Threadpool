@@ -7,11 +7,8 @@ task:	codec.h basic_main.c
 stdinExample:	stdin_main.c
 		gcc stdin_main.c ./libCodec.so -L. -l Codec -o tester
 
-coder: codec.h our_codec.c our_codec.h queue.h queue.c 
-	gcc our_codec.c ./libCodec.so -L. -l Codec -o coder -lpthread
-
-#queue: queue.h queue.c 
-#	gcc queue.c ./libCodec.so -L. -l Codec -o queue
+coder: codec.h our_codec.cpp our_codec.hpp
+	g++ our_codec.cpp ./libCodec.so -L. -l Codec -o coder -lpthread
 
 .PHONY: clean
 clean:
