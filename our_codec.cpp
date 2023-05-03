@@ -31,6 +31,15 @@ std::queue<pthread_t> t_pool; // queue holding all of our threads.
 int active_tasks = 0;
 int sum_of_tasks = 0;
 
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t lock2 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t lock3 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t lockWrite = PTHREAD_MUTEX_INITIALIZER;
+
+pthread_cond_t TaskCond = PTHREAD_COND_INITIALIZER;
+
+pthread_t admin_thread;
+
 void init_thread_pool()
 {
     int cores = get_nprocs_conf();
@@ -41,25 +50,107 @@ void init_thread_pool()
         t_pool.push(new_thread);
 
     }
+    // cout << "t_pool size: " << t_pool.size() << endl;
 }
 
-void handle_threads()
-{
-    while(active_tasks > 0)
-    {
-            
-    }//  pos_thread-> 1,2,3,4,5 | 1,2,3,4,5 ,    6,7,8,9,10
 
+// void* handle_threads(void *arg)
+// {   
+
+//     cout << "bla bla bla 2" << endl;
+//     int i = 0;
+//     while(i < 1)
+//     {   
+//         pthread_mutex_lock(&lock3);
+//         pthread_mutex_lock(&lock);
+
+//         while(task_pool.empty()){
+//             pthread_cond_wait(&TaskCond,&lock);
+//         }
+        
+//         cout << "bla bla bla 3" << endl;
+
+//         pthread_t active_thread = t_pool.front();
+//         t_pool.pop();
+//         // t_pool.push(active_thread);
+
+//         Task active_task = task_pool.front();
+//         task_pool.pop();
+
+//         // cout<< task_pool.size() << " bla bla bla 2" << endl;
+//         // pthread_create(&active_thread, NULL, handle_task, &active_task);
+//         // cout << "bla bla bla 2" << endl;
+
+//         pthread_mutex_unlock(&lock3);
+//         pthread_mutex_unlock(&lock);
+//         ++i;
+
+//     }//  pos_thread-> 1,2,3,4,5 | 1,2,3,4,5 ,    6,7,8,9,10
+    
+//     return 0;
+// }
+
+void* handle_task(void *arg)
+{
+    cout << "ZIBIBIBIBIBB" << endl;
+    Task* active_task = (Task*)arg;
+    while (true) {
+        pthread_mutex_lock(&lock);
+        while (task_pool.empty()) {
+            pthread_cond_wait(&TaskCond, &lock);
+        }
+        pthread_mutex_unlock(&lock);
+        // if (active_task->finished) {
+        //     delete active_task;
+        //     break;
+        // }
+        // do some task with active_task here...
+        cout << "blbablabalblabla" << endl;
+
+        pthread_mutex_lock(&lock3);
+        t_pool.push(pthread_self());
+        pthread_mutex_unlock(&lock3);
+    }
+    return 0;
+}
+
+void* handle_threads(void* arg) {
+    cout << "bla 1 " << endl;
+    cout << "t_pool size: " << t_pool.size() << endl;
+    pthread_t active_thread;
+    while (true) {
+        pthread_mutex_lock(&lock3);
+        if (!t_pool.empty()) {
+            active_thread = t_pool.front();
+            t_pool.pop();
+            pthread_mutex_unlock(&lock3);
+            pthread_mutex_lock(&lock);
+            if (!task_pool.empty()) {
+                Task *active_task = new Task(task_pool.front());
+                cout << "DATA OF TAPE : " << active_task->tape << endl;
+                task_pool.pop();
+                pthread_create(&active_thread, NULL, handle_task, active_task);
+            }
+            pthread_mutex_unlock(&lock);
+        } else {
+            pthread_mutex_unlock(&lock3);
+        }
+    }
+    return 0;
 }
 
 
 int main(int argc, char const *argv[])
 {
     /* code */
-   
+
     init_thread_pool();
 
-    
+    pthread_mutex_lock(&lock2);
+    pthread_create(&admin_thread, NULL, handle_threads, NULL);
+    pthread_mutex_unlock(&lock2);
+
+    pthread_mutex_lock(&lock2);
     if(argc > 1){
 
         //reads the data//
@@ -69,12 +160,12 @@ int main(int argc, char const *argv[])
             std::stringstream buffer; // string stream
             buffer << file.rdbuf(); // read file to the string stream
             data = buffer.str(); // imports the buffer to a normal string.
-            cout << "The data is: " << data << std::endl;
+            // cout << "The data is: " << data << std::endl;
         }
         else // case when we enter a string manually // 
         {
             data = argv[2];
-            std::cout << "The dta is: " << data << std::endl;
+            // std::cout << "The dta is: " << data << std::endl;
         }
         file.close(); // closing file
 
@@ -108,13 +199,12 @@ int main(int argc, char const *argv[])
         
         cout << "Task number: " << active_tasks << " Added to pool" << endl;
 
+        pthread_cond_broadcast(&TaskCond); // when done with tasks, init the threads.
 
     }
+    pthread_mutex_unlock(&lock2);
     ////////////////////
 
-    handle_threads();
-
-    
     printf("Sample code!\n");
     return 0;
 }
