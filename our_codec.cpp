@@ -187,13 +187,5 @@ int main(int argc, char const *argv[])
         }
     }
 
-    /*this loop tells the program to stop when all active tasks are done, its a plaster fix, but this is how we find it how to work.*/
-    while (1)
-    {
-        if (active_tasks == task_number)
-        {
-            break;
-        }
-    }
     return 0;
 }
