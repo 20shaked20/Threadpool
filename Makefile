@@ -1,8 +1,5 @@
 .PHONY: all
-all: task stdinExample coder
-
-task:	codec.h basic_main.c
-	gcc basic_main.c ./libCodec.so -L. -l Codec -o encoder 
+all: stdinExample coder
 
 stdinExample:	stdin_main.c
 		gcc stdin_main.c ./libCodec.so -L. -l Codec -o tester

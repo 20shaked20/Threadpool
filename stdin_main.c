@@ -1,3 +1,7 @@
+/**
+ * Demo provided by our proffessor
+*/
+
 #include "codec.h"
 #include <stdio.h>
 #include <string.h>
