@@ -1,5 +1,5 @@
 # Threadpool
-In this project we implement a thread-pool mechanism in the C language </br>
+In this project we implement a thread-pool mechanism in the C-C++ language </br>
 
 This is a sample of how a threadpool works in linux. </br>
 Our threadpool is implemented by using the maximum available resources for the cpu. </br>
