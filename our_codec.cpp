@@ -2,7 +2,7 @@
  * Main program of our_codec.h
  */
 #include "codec.h"
-
+#include "our_codec.hpp"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -18,6 +18,8 @@
 
 void (*encrypt_func)(char *s, int key);
 void (*decrypt_func)(char *s, int key);
+void *handle_task(void *arg);
+void *handle_threads(void *arg);
 
 
 using namespace std;
@@ -64,39 +66,6 @@ void init_thread_pool()
     }
 }
 
-/**
- * This method handles the task and simply encrpyt/decrpyts and prints the data.
- */
-void *handle_task(void *arg)
-{
-    struct Task *active_task = (struct Task *)arg; // import the given task to a Task type
-    
-    char* charArray = &active_task->tape[0];
-    if (active_task->type[1] == 'e') {
-        encrypt_func(charArray, active_task->key);
-    }
-    else if (active_task->type[1] == 'd') {
-        decrypt_func(charArray, active_task->key);
-    }
-
-    pthread_mutex_lock(&lockPrint);
-
-    while (task_number < active_task->index) // this loop is used in order to make sure we print accordinly, and not in some messed up order.
-    {
-        pthread_cond_wait(&WaitCond, &lockPrint);
-    }
-
-    cout << "DATA: " << active_task->tape << endl; // prints the data on tape.
-    fflush(stdout); //clears stdout, is important to make sure the buffer is cleared, so we dont get some junk.
-
-    task_number++; //increse the task number, is important for the loop above.
-    pthread_cond_broadcast(&WaitCond);
-
-    t_pool.push(pthread_self()); //thread is done, and we push it to the pool again so it can pick up new tasks.
-
-    pthread_cond_broadcast(&TaskCond); //tells that a task is ongoing
-    pthread_mutex_unlock(&lockPrint);
-}
 
 /**
  * Main thread handler, is used by admin_thread which assings the threads on diffrent tasks.
@@ -108,6 +77,8 @@ void *handle_threads(void *arg)
 
         pthread_mutex_lock(&lock);
 
+        struct Task *active_task = (struct Task *)malloc(sizeof(struct Task));
+
         while (task_pool.empty())
         { // simply wait untill there are tasks in the pool and start working.
             pthread_cond_wait(&TaskCond, &lock);
@@ -118,17 +89,14 @@ void *handle_threads(void *arg)
             pthread_cond_wait(&TaskCond, &lock);
         }
 
-        // take a task to work from the pool//
-        struct Task *active_task = (struct Task *)malloc(sizeof(struct Task));
+        // take a task to work from the pool //
         *active_task = task_pool.front();
         task_pool.pop();
 
         // init a thread from the pool on the taken task//
         pthread_create(&t_pool.front(), NULL, handle_task, (void *)active_task);
 
-
         t_pool.pop(); // removes the thread from the pool (we add it later, in order for it not to be used until finished)
-
 
         pthread_mutex_unlock(&lock);
     }
@@ -136,7 +104,7 @@ void *handle_threads(void *arg)
 
 int main(int argc, char const *argv[])
 {
-
+    
     /* code */
     void* handle = dlopen("./libCodec.so", RTLD_LAZY | RTLD_GLOBAL);
     if(!handle){
@@ -218,8 +186,43 @@ int main(int argc, char const *argv[])
             pthread_cond_broadcast(&TaskCond); // when done with tasks, init the threads.
         }
     }
- while(1){
-        continue;
+    while(true){
+       ;
     }
-    return 0;
+return 0;
 }
+
+/**
+ * This method handles the task and simply encrpyt/decrpyts and prints the data.
+ */
+void *handle_task(void *arg)
+{
+    struct Task *active_task = (struct Task *)arg; // import the given task to a Task type
+    
+    char* charArray = &active_task->tape[0];
+    if (active_task->type[1] == 'e') {
+        encrypt_func(charArray, active_task->key);
+    }
+    else if (active_task->type[1] == 'd') {
+        decrypt_func(charArray, active_task->key);
+    }
+
+    pthread_mutex_lock(&lockPrint);
+
+    while (task_number < active_task->index) // this loop is used in order to make sure we print accordinly, and not in some messed up order.
+    {
+        pthread_cond_wait(&WaitCond, &lockPrint);
+    }
+
+    cout << "DATA: " << active_task->tape << endl; // prints the data on tape.
+    fflush(stdout); //clears stdout, is important to make sure the buffer is cleared, so we dont get some junk.
+
+    task_number++; //increse the task number, is important for the loop above.
+    pthread_cond_broadcast(&WaitCond);
+
+    t_pool.push(pthread_self()); //thread is done, and we push it to the pool again so it can pick up new tasks.
+
+    pthread_cond_broadcast(&TaskCond); //tells that a task is ongoing
+    pthread_mutex_unlock(&lockPrint);
+}
+
