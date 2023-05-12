@@ -160,6 +160,7 @@ int main(int argc, char const *argv[])
 
         // split the data into tasks of 1024 bytes//
         int data_size = data.size();
+        // printf("DATA SIZE : %d \n", data_size);
         int pos = 0; // 0 -> 1024 , 1024 -> 2048
 
         while ((data_size - 1024) > 0 && pos + 1024 < data.size())
