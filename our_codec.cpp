@@ -23,16 +23,6 @@ void *handle_threads(void *arg);
 
 using namespace std;
 
-typedef struct Task
-{
-
-    char tape[1024]; // the string the task holds.
-    bool finished;   // is the task finished doing the ecnrpyt/decrpyt
-    char type[2];    // encode -> '-e' | decode -> '-d' //
-    int index;       // n.o of the task in the pool
-    int key;
-
-} Task;
 
 std::queue<struct Task> task_pool; // seprates the file into chuncks of tasks to encrypt/decrpyt.
 std::queue<pthread_t> t_pool;      // queue holding all of our threads.
@@ -50,9 +40,6 @@ pthread_cond_t WaitCond = PTHREAD_COND_INITIALIZER;
 
 pthread_t admin_thread; // the main thread that handles the 'mini' threads that operate on the tasks.
 
-/**
- * Init thread pool method
- */
 void init_thread_pool()
 {
     int cores = get_nprocs_conf();
@@ -64,12 +51,6 @@ void init_thread_pool()
     }
 }
 
-/**
- * This is taken from stackoverflow:
- * https://stackoverflow.com/questions/17081131/how-can-a-shared-library-so-call-a-function-that-is-implemented-in-its-loader
- * i didnt know how to call the functions by its own, because it didnt work.
- * so google helped.
- */
 int call_library_functions()
 {
     void *handle = NULL;
@@ -91,9 +72,6 @@ int call_library_functions()
     return 0;
 }
 
-/**
- * Main thread handler, is used by admin_thread which assings the threads on diffrent tasks.
- */
 void *handle_threads(void *arg)
 {
     while (true)
@@ -126,9 +104,6 @@ void *handle_threads(void *arg)
     }
 }
 
-/**
- * This method handles the task and simply encrpyt/decrpyts and prints the data.
- */
 void *handle_task(void *arg)
 {
     struct Task *active_task = (struct Task *)arg; // import the given task to a Task type
@@ -185,7 +160,6 @@ int main(int argc, char const *argv[])
 
         // split the data into tasks of 1024 bytes//
         int data_size = data.size();
-        // printf("DATA SIZE : %d \n", data_size);
         int pos = 0; // 0 -> 1024 , 1024 -> 2048
 
         while ((data_size - 1024) > 0 && pos + 1024 < data.size())
@@ -196,7 +170,6 @@ int main(int argc, char const *argv[])
             char dataArray[1024];
             memset(dataArray, '\0', 1024);
             std::strncpy(dataArray, data.substr(pos, 1024).c_str(), 1024);
-            printf("%s", dataArray);
             memset(new_task->tape, '\0', 1024);
             strcpy(new_task->tape, dataArray);
             strcpy(new_task->type, argv[2]);
