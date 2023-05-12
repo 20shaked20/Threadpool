@@ -61,7 +61,7 @@ int call_library_functions()
         return -1;
     }
     encrypt_data = (void (*)(char *s, int key))dlsym(handle, "encrypt");
-    decrypt_data = (void (*)(char *s, int key))dlsym(handle, "encrypt");
+    decrypt_data = (void (*)(char *s, int key))dlsym(handle, "decrypt");
 
     if (encrypt_data == NULL || decrypt_data == NULL)
     {
